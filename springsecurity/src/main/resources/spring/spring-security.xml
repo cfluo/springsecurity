@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	   		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+			http://www.springframework.org/schema/security 
+			http://www.springframework.org/schema/security/spring-security-3.0.xsd">
+			
+	<!--  Spring-Security 的配置 -->
+	<!-- 注意use-expressions=true.表示开启表达式,否则表达式将不可用. -->
+	<security:http auto-config="true" access-denied-page="/accessDenied.jsp">
+		<security:form-login login-page="/login.jsp"/>
+		<!-- 指定退出系统后跳转的页面 -->
+		<security:logout logout-success-url="/login.jsp"/>
+		<!-- 配置对登录页面不拦截，加上*可能页面后面会带参数 -->
+		<security:intercept-url pattern="/login.jsp*" filters="none"/>
+		<security:intercept-url pattern="/admin.jsp*" access="ROLE_ADMIN"/>
+		<security:intercept-url pattern="/index.jsp*" access="ROLE_ADMIN,ROLE_USER"/>
+		<security:intercept-url pattern="/**" access="ROLE_USER"/>
+		<!-- 会话管理配置 -->
+		<security:session-management invalid-session-url="/login.jsp">
+			<!-- 防止用户重复登录 -->
+			<security:concurrency-control max-sessions="1" 
+			  error-if-maximum-exceeded="true"/>
+		</security:session-management>
+	</security:http>
+	<!-- property configuration -->
+	<bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>classpath:db.properties</value>
+            </list>
+        </property>
+    </bean>
+	<!-- 配置数据源 -->
+	 <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="${jdbc.driverClassName}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+	<!-- 配置认证管理器 -->
+	<security:authentication-manager>
+		<security:authentication-provider>
+			<security:password-encoder hash="md5"/>
+			<!-- <security:user-service>
+					<security:user name="user" password="e10adc3949ba59abbe56e057f20f883e" authorities="ROLE_USER"/>
+			</security:user-service> -->
+			
+			<security:jdbc-user-service data-source-ref="dataSource"/>
+		</security:authentication-provider>
+	</security:authentication-manager>
+	<bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<!-- 系统自带的国际化资源文件 -->
+		<!-- <property name="basename" value="classpath:org/springframework/security/messages_zh_CN">-->
+		<property name="basename" value="classpath:messages_zh_CN">
+		</property>
+	</bean>
+</beans>
